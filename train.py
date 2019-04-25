@@ -71,3 +71,19 @@ class MultiScaleNetwork(tf.keras.Model):
         x = self.dense(x)
         x = tf.math.l2_normalize(x, axis=-1)
         return x
+
+
+def triplet_loss(anchor, positive, negative):
+    pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)), -1)
+    # same as
+    # pos_dist = tf.multiply(2., tf.subtract(1, tf.math.reduce_sum(tf.math.multiply(anchor, positive), -1)))
+    # but first is faster
+    neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), -1)
+
+    basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), GAP_PARAMETER)
+    loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), 0)
+
+
+    return loss
+
+# TODO add lambda regularization
