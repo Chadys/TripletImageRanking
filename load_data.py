@@ -12,3 +12,4 @@ def get_test_hard_images():
 
 # TODO construct TFRecord
 # TODO first construct easy dataset taking positive image from positive or negative ref and negative image from exterior query
+# TODO data augmentation
