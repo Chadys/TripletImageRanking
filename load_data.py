@@ -1,17 +1,13 @@
-@property
-def train_easy_images():
+def get_train_easy_images():
     return []
 
-@property
-def train_hard_images():
+def get_train_hard_images():
     return []
 
-@property
-def test_easy_images():
+def get_test_easy_images():
     return []
 
-@property
-def test_hard_images():
+def get_test_hard_images():
     return []
 
 # TODO construct TFRecord
