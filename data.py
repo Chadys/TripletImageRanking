@@ -10,7 +10,24 @@ TRAIN_TEST_DISTRIB = 0.1
 
 def get_train_easy_images():
     download_if_needed()
-    return []
+    n_triplets = get_n_triplets()
+    train_stop = n_triplets - (n_triplets * TRAIN_TEST_DISTRIB)
+    img_strings_dict = {"anchor": [], "positive": [], "negative": []}
+
+    with open(DATASET_FILE_NAME) as dataset_file:
+        i = 1
+        while True:
+            search_query = dataset_file.readline().strip()
+            if not search_query:
+                break
+            query_dir = DATASET_FILES_DIR / search_query / str(i)
+            for name in ["anchor", "positive", "negative"]:
+                dataset_file.readline()
+                img_strings_dict[name].append(open(query_dir / name, "rb").read())
+            if i == train_stop:
+                break
+            i += 1
+    return tf.data.Dataset.from_tensor_slices(tuple(img_strings_dict.values())).map(preprocess_triplet)
 
 
 def get_train_hard_images():
@@ -26,6 +43,14 @@ def get_test_easy_images():
 def get_test_hard_images():
     download_if_needed()
     return []
+
+
+def get_n_triplets():
+    n_triplets = 0
+    for _ in open(DATASET_FILE_NAME):
+        n_triplets += 1
+    n_triplets //= 4
+    return n_triplets
 
 
 # TODO first construct easy dataset taking positive image from positive or negative ref and negative image from exterior query
@@ -49,11 +74,7 @@ def preprocess_image_file(img_string):
 def download_if_needed():
     if DATASET_FILES_DIR.exists():
         return
-    n_triplets = 0
-    for _ in open(DATASET_FILE_NAME):
-        n_triplets += 1
-    n_triplets //= 4
-    # train_stop = n_triplets - (n_triplets * TRAIN_TEST_DISTRIB)
+    n_triplets = get_n_triplets()
 
     with open(DATASET_FILE_NAME) as dataset_file:
         i = 1
@@ -67,29 +88,7 @@ def download_if_needed():
             negative = dataset_file.readline().strip()
             query_dir = DATASET_FILES_DIR / search_query / str(i)
             for name in ["anchor", "positive", "negative"]:
-                dataset_dict[name].append(
-                    open(
-                        tf.keras.utils.get_file(
-                            name, eval(name), cache_dir=".", cache_subdir=query_dir
-                        ),
-                        "rb"
-                    ).read()
+                tf.keras.utils.get_file(
+                    name, eval(name), cache_dir=".", cache_subdir=query_dir
                 )
-            if (
-                len(dataset_dict["anchor"]) == NB_TRIPLET_PER_TFRECORD
-                or i == train_stop
-            ):
-                features_dataset = tf.data.Dataset.from_tensor_slices(
-                    tuple(dataset_dict.values())
-                )
-                features_dataset = features_dataset.map(preprocess_triplet)
-                writer = tf.data.experimental.TFRecordWriter(
-                        str(tfrecord_dir / f"hard_triplets_{j:02}.tfrecord")
-                )
-                writer.write(features_dataset)
-                j += 1
-                dataset_dict = {"anchor": [], "positive": [], "negative": []}
-            if i == train_stop:
-                tfrecord_dir = TFRECORD_FILES_DIR / "hard" / "test"
-                # tfrecord_dir.mkdir()
             i += 1
