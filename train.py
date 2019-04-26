@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import tensorflow as tf
 
 import load_data
@@ -21,7 +19,7 @@ print("Number of devices: {}".format(strategy.num_replicas_in_sync))
 
 
 class MultiScaleNetwork(tf.keras.Model):
-    def __init__(self):
+    def __init__(self, img_shape):
         super().__init__(name="multiscale_network")
         # self.convnet = tf.keras.applications.NASNetLarge(
         #     input_shape=IMG_SHAPE,
@@ -29,7 +27,7 @@ class MultiScaleNetwork(tf.keras.Model):
         #     weights="imagenet"
         # )
         self.convnet = tf.keras.applications.InceptionResNetV2(
-            input_shape=IMG_SHAPE,
+            input_shape=img_shape,
             include_top=False,
             weights="imagenet"
         )
@@ -75,14 +73,13 @@ class MultiScaleNetwork(tf.keras.Model):
 
 def triplet_loss(anchor, positive, negative):
     pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)), -1)
-    # same as
+    neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), -1)
+    # because vectors are l2 normed, same as
     # pos_dist = tf.multiply(2., tf.subtract(1, tf.math.reduce_sum(tf.math.multiply(anchor, positive), -1)))
     # but first is faster
-    neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), -1)
 
     basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), GAP_PARAMETER)
     loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), 0)
-
 
     return loss
 
