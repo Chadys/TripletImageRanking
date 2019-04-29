@@ -5,14 +5,22 @@ import tensorflow as tf
 IMG_SIZE = 225
 DATASET_FILE_NAME = "query_and_triplets.txt"
 DATASET_FILES_DIR = Path("./dataset_original_files")
-TRAIN_TEST_DISTRIB = 0.1
+TRAIN_VALIDATION_DISTRIB = 0.15
+TRAIN_TEST_DISTRIB = 0.05
 
 
-def get_train_easy_images():
+def get_hard_images():
     download_if_needed()
     n_triplets = get_n_triplets()
-    train_stop = n_triplets - (n_triplets * TRAIN_TEST_DISTRIB)
-    img_strings_dict = {"anchor": [], "positive": [], "negative": []}
+    validation_stop = n_triplets - int(n_triplets * TRAIN_TEST_DISTRIB)
+    train_stop = validation_stop - int(n_triplets * TRAIN_VALIDATION_DISTRIB)
+    data_types = ["train", "validation", "test"]
+    img_strings_dict = {
+        data_type: {"anchor": [], "positive": [], "negative": []}
+        for data_type in data_types
+    }
+    data_types_gen = (data_type for data_type in data_types)
+    data_type = next(data_types_gen)
 
     with open(DATASET_FILE_NAME) as dataset_file:
         i = 1
@@ -23,24 +31,21 @@ def get_train_easy_images():
             query_dir = DATASET_FILES_DIR / search_query / str(i)
             for name in ["anchor", "positive", "negative"]:
                 dataset_file.readline()
-                img_strings_dict[name].append(open(query_dir / name, "rb").read())
-            if i == train_stop:
-                break
+                img_strings_dict[data_type][name].append(
+                    open(query_dir / name, "rb").read()
+                )
+            if i == train_stop or i == validation_stop:
+                data_type = next(data_types_gen)
             i += 1
-    return tf.data.Dataset.from_tensor_slices(tuple(img_strings_dict.values())).map(preprocess_triplet)
+    return {
+        data_type: tf.data.Dataset.from_tensor_slices(tuple(triplet_dict.values())).map(
+            preprocess_triplet
+        )
+        for data_type, triplet_dict in img_strings_dict.items()
+    }
 
 
-def get_train_hard_images():
-    download_if_needed()
-    return []
-
-
-def get_test_easy_images():
-    download_if_needed()
-    return []
-
-
-def get_test_hard_images():
+def get_easy_images():
     download_if_needed()
     return []
 

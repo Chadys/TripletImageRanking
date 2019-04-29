@@ -2,7 +2,7 @@ import tensorflow as tf
 
 import data
 
-train_images = data.get_train_hard_images()
+train_images = data.get_hard_images()
 
 IMG_SIZE = data.IMG_SIZE
 IMG_SHAPE = (IMG_SIZE, IMG_SIZE, 3)
