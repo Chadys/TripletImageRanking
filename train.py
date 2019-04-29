@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 import data
+from losses import TripletLoss
 from models import DeepRankingNetwork
 
 IMG_SIZE = data.IMG_SIZE
@@ -9,26 +10,6 @@ EPOCHS = 2
 GAP_PARAMETER = 0.2
 EMBEDDINGS_DIM = 4096
 BATCH_SIZE = data.BATCH_SIZE
-
-
-def make_triplet_loss(gap_parameter, embeddings_dim):
-    def triplet_loss(_, triplet):
-        anchor, positive, negative = (
-            triplet[:, i : i + embeddings_dim]
-            for i in range(0, embeddings_dim * 3, embeddings_dim)
-        )
-        pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)), -1)
-        neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), -1)
-        # because vectors are l2 normed, same as
-        # pos_dist = tf.multiply(2., tf.subtract(1, tf.math.reduce_sum(tf.math.multiply(anchor, positive), -1)))
-        # but first is faster
-
-        basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), gap_parameter)
-        loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), 0)
-
-        return loss
-
-    return triplet_loss
 
 
 # strategy = tf.distribute.MirroredStrategy()
@@ -42,7 +23,7 @@ datasets = data.get_hard_images()
 model = DeepRankingNetwork(IMG_SHAPE, EMBEDDINGS_DIM)
 model.compile(
     optimizer=tf.keras.optimizers.Adam(0.001),
-    loss=make_triplet_loss(GAP_PARAMETER, EMBEDDINGS_DIM),
+    loss=TripletLoss(GAP_PARAMETER, EMBEDDINGS_DIM),
     metrics=["accuracy"],
 )
 
