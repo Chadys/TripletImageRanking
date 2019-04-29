@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 class MultiScaleNetwork(tf.keras.Model):
-    def __init__(self, img_shape):
+    def __init__(self, img_shape, embeddings_dim):
         super().__init__(name="multiscale_network")
         # self.convnet = tf.keras.applications.NASNetLarge(
         #     input_shape=IMG_SHAPE,
@@ -30,7 +30,7 @@ class MultiScaleNetwork(tf.keras.Model):
         self.maxpool_2 = tf.keras.layers.MaxPool2D(3, 2, "same")
 
         self.flatten = tf.keras.layers.Flatten()
-        self.dense = tf.keras.layers.Dense(4096)
+        self.dense = tf.keras.layers.Dense(embeddings_dim)
 
     def call(self, inputs, **kwargs):
         features_x = self.convnet(inputs)
@@ -52,3 +52,12 @@ class MultiScaleNetwork(tf.keras.Model):
         x = self.dense(x)
         x = tf.math.l2_normalize(x, axis=-1)
         return x
+
+
+class DeepRankingNetwork(tf.keras.Model):
+    def __init__(self, img_shape, embeddings_dim):
+        super().__init__(name="deepranking_network")
+        self.multiscale = MultiScaleNetwork(img_shape=img_shape, embeddings_dim=embeddings_dim)
+
+    def call(self, inputs, **kwargs):
+        return tf.keras.layers.concatenate([self.multiscale(x) for x in inputs])
