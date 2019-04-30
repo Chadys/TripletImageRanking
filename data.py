@@ -96,6 +96,8 @@ def preprocess_triplet(anchor, positive, negative):
 def preprocess_image_file(img_string):
     img = tf.image.decode_jpeg(img_string, channels=3)
     img = tf.image.resize(img, (IMG_SIZE, IMG_SIZE))  # TODO test without resize
+    if tf.keras.backend.image_data_format() == "channels_first":
+        img = tf.transpose(img, [2, 0, 1])  # convert to CHW
     return tf.keras.applications.inception_resnet_v2.preprocess_input(img)
 
 
