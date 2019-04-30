@@ -19,6 +19,6 @@ class TripletLoss(tf.keras.losses.Loss):
         # but first is faster
 
         basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), self.gap_parameter)
-        loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), 0)
+        loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), -1)
 
         return loss

@@ -26,6 +26,7 @@ BATCH_SIZE = data.BATCH_SIZE
 # TODO add lambda regularization
 # TODO other regularizer (batch norm, dropout etc)
 # TODO CLR
+# TODO add activation layers ?
 
 print(f"image data format is {tf.keras.backend.image_data_format()}")
 datasets = data.get_hard_images()
