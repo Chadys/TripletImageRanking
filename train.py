@@ -31,16 +31,25 @@ BATCH_SIZE = data.BATCH_SIZE
 print(f"image data format is {tf.keras.backend.image_data_format()}")
 datasets = data.get_hard_images()
 model = DeepRankingNetwork(IMG_SHAPE, EMBEDDINGS_DIM)
+base_lr = 0.001
+max_lr = 0.06
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(0.001),
+    optimizer=tf.keras.optimizers.Adam(base_lr),  # TODO choose optimizer
     loss=TripletLoss(GAP_PARAMETER, EMBEDDINGS_DIM),
-    metrics=["accuracy"],
+    metrics=[],
 )
 
+steps_per_epoch = datasets["train"][0] // BATCH_SIZE
 model.fit(
     datasets["train"][1],
     validation_data=datasets["validation"][1],
     validation_steps=datasets["validation"][0] // BATCH_SIZE,
-    steps_per_epoch=datasets["train"][0] // BATCH_SIZE,
+    steps_per_epoch=steps_per_epoch,
     epochs=EPOCHS,
+    callbacks=[
+        tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch_index: base_lr + (max_lr-base_lr)*(max(0, (1-epoch_index))*1/(2.**(epoch_index-1)))),  # TODO test w/ ReduceLROnPlateau instead
+        tf.keras.callbacks.EarlyStopping("val_loss", patience=10, restore_best_weights=True),
+        tf.keras.callbacks.ModelCheckpoint(filepath="saves/weights.{epoch:02d}-{val_loss:.2f}.hdf5", monitor="val_loss", save_best_only=True, save_freq="epoch"),
+        tf.keras.callbacks.TensorBoard(histogram_freq=5, write_images=True)
+    ]
 )

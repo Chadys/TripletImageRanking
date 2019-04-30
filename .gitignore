@@ -1,2 +1,4 @@
 .idea/*
 dataset_original_files/*
+logs/*
+saves/*
