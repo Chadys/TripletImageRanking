@@ -1,11 +1,13 @@
 import tensorflow as tf
+from tensorflow.python.keras.utils import losses_utils
 
 
 class TripletLoss(tf.keras.losses.Loss):
-    def __init__(self, gap_parameter, embeddings_dim, **kwargs):
+    def __init__(self, gap_parameter, embeddings_dim, batch_size, reduction=losses_utils.ReductionV2.SUM, name="triplet_loss"):
         self.gap_parameter = gap_parameter
         self.embeddings_dim = embeddings_dim
-        super().__init__(**kwargs, name="triplet_loss")
+        self.batch_size = batch_size
+        super().__init__(reduction=reduction, name=name)
 
     def call(self, _, triplet):
         anchor, positive, negative = (
@@ -19,6 +21,6 @@ class TripletLoss(tf.keras.losses.Loss):
         # but first is faster
 
         basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), self.gap_parameter)
-        loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0), -1)
+        loss = tf.reduce_sum(tf.maximum(basic_loss, 0.0), -1)  * (1. / self.batch_size) # because of parallel strategy
 
         return loss
