@@ -1,3 +1,5 @@
+# import os
+# os.environ['TF_ENABLE_AUTO_MIXED_PRECISION'] = '1'  # waiting for integration from tf-nvidia to tf
 import tensorflow as tf
 
 tf.keras.backend.set_image_data_format(
