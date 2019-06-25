@@ -10,6 +10,8 @@ TRAIN_TEST_DISTRIB = 0.05
 BATCH_SIZE = 128
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
+# TODO from paper : "Random pixel shift is applied to the input images for data augmentation."
+
 
 def get_hard_images():
     download_if_needed()

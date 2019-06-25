@@ -30,6 +30,8 @@ class MultiScaleNetwork(tf.keras.Model):
         self.maxpool_2 = tf.keras.layers.MaxPool2D(3, 2, "same")
 
         self.flatten = tf.keras.layers.Flatten()
+        # from paper : To avoid overfitting, dropout with keeping probability 0.6 is applied to all the fully connected layers
+        self.dropout = tf.keras.layers.Dropout(0.6)
         self.dense = tf.keras.layers.Dense(embeddings_dim)
 
     def call(self, inputs, **kwargs):
@@ -50,6 +52,7 @@ class MultiScaleNetwork(tf.keras.Model):
 
         x = tf.keras.layers.concatenate([features_x, sub_x])
         x = self.dense(x)
+        x = self.dropout(x)
         x = tf.math.l2_normalize(x, axis=-1)
         return x
 
