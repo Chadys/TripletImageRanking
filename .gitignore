@@ -2,3 +2,7 @@
 dataset_original_files/*
 logs/*
 saves/*
+!saves/.gitkeep
+.DS_Store
+__pycache__/
+deep_ranking_model/*
